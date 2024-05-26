@@ -4,51 +4,65 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout source code
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'adopt'
-        java-version: '17'
+      #JDK Setting
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+      # Set environment variables
+      - name: Set environment variables
+        run: |
+          echo "DB_URL=${{ secrets.DB_URL }}" >> $GITHUB_ENV
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> $GITHUB_ENV
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> $GITHUB_ENV
 
-    - name: Build with Gradle
-      run: ./gradlew build
+      #Grant gradlew Permission
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+        shell: bash
 
-    - name: Run tests
-      run: ./gradlew test
+      - name: Build with Gradle
+        run: ./gradlew clean build
+        shell: bash
 
-    - name: Create artifact directory
-      run: mkdir -p deploy
+      - name: Get current time
+        uses: 1466587594/get-current-time@v2
+        id: current-time
+        with:
+          format: YYYY-MM-DDTHH-mm-ss
+          utcOffset: "+09:00"
 
-    - name: Copy jar file
-      run: cp build/libs/*.jar deploy/application.jar
+      - name: Show Current Time
+        run: echo "CurrentTime=$"
+        shell: bash
 
-    - name: Zip files
-      run: zip -r deploy.zip deploy/
+      - name: Generate deployment package
+        run: |
+          mkdir -p deploy
+          cp build/libs/*.jar deploy/application.jar
+          #cp Procfile deploy/Procfile
+          #cp -r .ebextensions deploy/.ebextensions
+          #cp -r .platform deploy/.platform
+          cd deploy && zip -r deploy.zip .
 
-    - name: Deploy to Elastic Beanstalk
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: 'ap-northeast-2'  # 사용중인 AWS 리전
-        APPLICATION_NAME: 'health-buddy'  # Elastic Beanstalk 애플리케이션 이름
-        ENVIRONMENT_NAME: 'Health-buddy-env'  # Elastic Beanstalk 환경 이름
-        S3_BUCKET: 'elasticbeanstalk-ap-northeast-2-533267065972'  # S3 버킷 이름
-      run: |
-        aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-        aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-        aws configure set default.region $AWS_REGION
-        aws s3 cp deploy.zip s3://$S3_BUCKET/deploy.zip
-        aws elasticbeanstalk create-application-version --application-name $APPLICATION_NAME --version-label $GITHUB_SHA --source-bundle S3Bucket=$S3_BUCKET,S3Key=deploy.zip
-        aws elasticbeanstalk update-environment --environment-name $ENVIRONMENT_NAME --version-label $GITHUB_SHA
+      - name: Beanstalk Deploy
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: health-buddy
+          environment_name: Health-buddy-env
+          version_label: github-action-${{ steps.current-time.outputs.formattedTime }}
+          region: ap-northeast-2
+          deployment_package: deploy/deploy.zip
