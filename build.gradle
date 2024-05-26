@@ -37,3 +37,7 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+jar { //cicd - cp 오류때문에 추가
+    enabled = false
+}
