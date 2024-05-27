@@ -47,7 +47,7 @@ jobs:
       - name: Show Current Time
         run: echo "CurrentTime=$"
         shell: bash
-
+        
       - name: Generate deployment package
         run: |
           mkdir -p deploy
