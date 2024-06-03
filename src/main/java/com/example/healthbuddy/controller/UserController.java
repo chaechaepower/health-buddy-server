@@ -7,6 +7,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 public class UserController {
@@ -16,7 +20,7 @@ public class UserController {
 
 
     @PostMapping("/users")
-    public ResponseEntity<?> join(@RequestBody User user) {
+    public ResponseEntity<User> join(@RequestBody User user) {
         User newUser = userService.join(user);
         return ResponseEntity.ok(newUser);
     }
@@ -33,12 +37,15 @@ public class UserController {
 
 
     /**
-     * 스프링, 리액트 통신 테스트 컨트롤러
+     * 스프링, 안드로이드 통신 테스트 컨트롤러
      **/
-    @GetMapping("/api/test")
-    public String hello() {
-        return "테스트입니다.";
+    @GetMapping("/test")
+    List<User> all(){
+        return userService.showUserList();
     }
+
+
+
 
 }
 
