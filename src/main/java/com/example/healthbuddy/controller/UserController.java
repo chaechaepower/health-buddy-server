@@ -16,13 +16,13 @@ public class UserController {
 
 
     @PostMapping("/users")
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
-        User newUser = userService.register(user);
+    public ResponseEntity<?> join(@RequestBody User user) {
+        User newUser = userService.join(user);
         return ResponseEntity.ok(newUser);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User user) {
+    public ResponseEntity<?> login(@RequestBody User user) {
         User existUser = userService.findByEmail(user.getEmail());
         if (existUser != null && passwordEncoder.matches(user.getPassword(), existUser.getPassword())) {
             return ResponseEntity.ok(existUser);
@@ -31,9 +31,14 @@ public class UserController {
         }
     }
 
-    @GetMapping("/test")
-    public String test(){
-        return "test";
+
+    /**
+     * 스프링, 리액트 통신 테스트 컨트롤러
+     **/
+    @GetMapping("/api/test")
+    public String hello() {
+        return "테스트입니다.";
     }
+
 }
 

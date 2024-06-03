@@ -1,9 +1,6 @@
 package com.example.healthbuddy.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -12,12 +9,30 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long userId;
 
     private String email;
     private String password;
     private String nickname;
-    private char gender;
+
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
+    private String image;
     private int height;
+    private int weight;
+    private double skeletalMuscle;
+    private double bodyFat;
+
+    @Column(columnDefinition = "TEXT")
+    private String analysisResult;
+
+    @ManyToOne
+    @JoinColumn(name = "goal_id")
+    private Goal goalId;  // Goal 테이블의 goalId(외래키)
+
+    public enum Gender {
+        M, F
+    }
 
 }
